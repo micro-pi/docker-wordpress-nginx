@@ -28,6 +28,7 @@ services:
       - "${DB_PORT}:3306"
     volumes:
       - db_data:/var/lib/mysql
+    command: --bind-address=${DB_BIND_ADDRESS}
 
 volumes:
   db_data:
