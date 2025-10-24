@@ -3,7 +3,7 @@ name: Docker-Image-CI
 on:
   push:
     branches:
-      - _actions # Trigger on pushes to the _actions branch
+      - '**'  # Matches all branches
   pull_request:
     branches:
       - main # Trigger on pull requests targeting the main branch
