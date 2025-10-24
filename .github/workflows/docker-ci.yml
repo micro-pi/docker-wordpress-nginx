@@ -1,20 +1,19 @@
-name: Docker Image CI
+name: Docker-Image-CI
 
 on:
   push:
     branches:
-      - _actions
+      - _actions # Trigger on pushes to the _actions branch
   pull_request:
     branches:
-      - main
+      - main # Trigger on pull requests targeting the main branch
 
 jobs:
   build-and-run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Specify the runner environment
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # Checkout the repository content
 
       - name: Build the Docker image
         run: docker compose up -d --build
-        #run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
