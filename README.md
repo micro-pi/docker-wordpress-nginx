@@ -1,3 +1,4 @@
+![Build Status](https://github.com/micro-pi/docker-wordpress-nginx/actions/workflows/docker-ci.yml/badge.svg?branch=main)
 
 # Docker WordPress + Nginx
 
