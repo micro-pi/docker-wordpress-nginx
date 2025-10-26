@@ -11,6 +11,8 @@ services:
     volumes:
       # Mount the named volume as read-only for Nginx
       - app_code:/var/www/html:ro
+    networks:
+      - wp_net
 
   php:
     build: ./php
@@ -21,6 +23,8 @@ services:
     volumes:
       # Mount the named volume as read-write for PHP
       - app_code:/var/www/html:rw
+    networks:
+      - wp_net
 
   db:
     image: mariadb:latest
@@ -35,7 +39,13 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     command: --bind-address=${DB_BIND_ADDRESS}
+    networks:
+      - wp_net
 
 volumes:
   db_data:
   app_code:
+
+networks:
+  wp_net:
+    driver: bridge
