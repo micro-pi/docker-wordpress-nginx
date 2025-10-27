@@ -104,6 +104,9 @@ docker compose down -v
 ![WordPress Home Page](screenshots/wordpress-home-page.png)
 
 ## 🐳 Docker Status
+
+Below you can see the local Docker environment after building the stack.
+
 ### 🧱 Images
 ```text
 PS D:\workspaces\docker-workspace\docker-wordpress-nginx> docker images
@@ -117,6 +120,9 @@ adminer      latest    b1d44e230bed   11 days ago     168MB
 mariadb      latest    5b6a1eac15b8   2 months ago    456MB
 ```
 
+#### 📸 Docker Desktop – Images View
+![Docker Desktop – Images View](screenshots/docker-desktop-images.png)
+
 ### 🚀 Running Containers
 ```text
 PS D:\workspaces\docker-workspace\docker-wordpress-nginx> docker ps
@@ -126,6 +132,9 @@ a0dbf4566285   adminer:latest    "entrypoint.sh docke…"   7 minutes ago   Up 7
 8a65218f5b09   wp_php:latest     "docker-php-entrypoi…"   7 minutes ago   Up 7 minutes   9000/tcp                                      wp_php
 3163cebdf6f6   mariadb:latest    "docker-entrypoint.s…"   7 minutes ago   Up 7 minutes   0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp   wp_db
 ```
+
+#### 📸 Docker Desktop – Running Containers
+![Docker Desktop – Running Containers](screenshots/docker-desktop-running-containers.png)
 
 ## 🗄️Database Configuration
 The setup includes a **MariaDB** container with default credentials (customizable via `.env`):
