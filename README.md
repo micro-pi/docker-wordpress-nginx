@@ -77,6 +77,14 @@ To check running containers:
 ```text
 docker compose ps
 ```
+**🚀 Running Containers**
+```text
+NAME         IMAGE             COMMAND                  SERVICE   CREATED          STATUS         PORTS
+wp_adminer   adminer:latest    "entrypoint.sh docke…"   adminer   10 minutes ago   Up 9 minutes   0.0.0.0:8181->8080/tcp, [::]:8181->8080/tcp
+wp_db        mariadb:latest    "docker-entrypoint.s…"   db        10 minutes ago   Up 9 minutes   0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp
+wp_nginx     wp_nginx:latest   "/docker-entrypoint.…"   nginx     9 minutes ago    Up 9 minutes   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp
+wp_php       wp_php:latest     "docker-php-entrypoi…"   php       10 minutes ago   Up 9 minutes   9000/tcp
+```
 
 4. Access your WordPress site
 Open your browser and visit:
@@ -88,6 +96,50 @@ To stop the stack and remove all containers and volumes:
 ```text
 docker compose down -v
 ```
+
+### 🔹 WordPress
+
+**Setup Configuration**
+![WordPress Setup Configuration File](screenshots/wordpress-setup-configuration-file.png)
+
+**Dashboard**
+![WordPress Dashboard](screenshots/wordpress-dashboard.png)
+
+**Home Page**
+![WordPress Home Page](screenshots/wordpress-home-page.png)
+
+## 🐳 Docker Status
+
+Below you can see the local Docker environment after building the stack.
+
+### 🧱 Images
+```text
+PS D:\workspaces\docker-workspace\docker-wordpress-nginx> docker images
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+wp_php       latest    c48d427debfc   7 minutes ago   822MB
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+wp_php       latest    c48d427debfc   7 minutes ago   822MB
+wp_php       latest    c48d427debfc   7 minutes ago   822MB
+wp_nginx     latest    dc0cdfddea42   30 hours ago    225MB
+adminer      latest    b1d44e230bed   11 days ago     168MB
+mariadb      latest    5b6a1eac15b8   2 months ago    456MB
+```
+
+#### 📸 Docker Desktop – Images View
+![Docker Desktop – Images View](screenshots/docker-desktop-images.png)
+
+### 🚀 Running Containers
+```text
+PS D:\workspaces\docker-workspace\docker-wordpress-nginx> docker ps
+CONTAINER ID   IMAGE             COMMAND                  CREATED         STATUS         PORTS                                         NAMES
+9a5ef764da35   wp_nginx:latest   "/docker-entrypoint.…"   7 minutes ago   Up 7 minutes   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp       wp_nginx
+a0dbf4566285   adminer:latest    "entrypoint.sh docke…"   7 minutes ago   Up 7 minutes   0.0.0.0:8181->8080/tcp, [::]:8181->8080/tcp   wp_adminer
+8a65218f5b09   wp_php:latest     "docker-php-entrypoi…"   7 minutes ago   Up 7 minutes   9000/tcp                                      wp_php
+3163cebdf6f6   mariadb:latest    "docker-entrypoint.s…"   7 minutes ago   Up 7 minutes   0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp   wp_db
+```
+
+#### 📸 Docker Desktop – Running Containers
+![Docker Desktop – Running Containers](screenshots/docker-desktop-running-containers.png)
 
 ## 🗄️Database Configuration
 The setup includes a **MariaDB** container with default credentials (customizable via `.env`):
