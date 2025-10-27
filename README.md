@@ -117,8 +117,6 @@ Below you can see the local Docker environment after building the stack.
 PS D:\workspaces\docker-workspace\docker-wordpress-nginx> docker images
 REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
 wp_php       latest    c48d427debfc   7 minutes ago   822MB
-REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
-wp_php       latest    c48d427debfc   7 minutes ago   822MB
 wp_php       latest    c48d427debfc   7 minutes ago   822MB
 wp_nginx     latest    dc0cdfddea42   30 hours ago    225MB
 adminer      latest    b1d44e230bed   11 days ago     168MB
