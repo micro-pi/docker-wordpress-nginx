@@ -1,3 +1,27 @@
+# WordPress source files (managed by Docker image)
 /php/wordpress/*
 !/php/wordpress/readme.txt
-.env.dev
+
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Explicitly allow the example/template file
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor/IDE directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.env

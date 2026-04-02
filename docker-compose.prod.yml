@@ -1,0 +1,14 @@
+name: docker-wp-nginx-php-mariadb-${APP_SUFFIX:-prod}
+
+services:
+  nginx:
+    container_name: wp_nginx_${APP_SUFFIX:-prod}
+
+  php:
+    container_name: wp_php_${APP_SUFFIX:-prod}
+
+  db:
+    container_name: wp_db_${APP_SUFFIX:-prod}
+
+  adminer:
+    container_name: wp_adminer_${APP_SUFFIX:-prod}

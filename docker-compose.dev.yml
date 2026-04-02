@@ -1,0 +1,20 @@
+name: docker-wp-nginx-php-mariadb-${APP_SUFFIX:-dev}
+
+services:
+  nginx:
+    container_name: wp_nginx_${APP_SUFFIX:-dev}
+    volumes:
+      # Dev mode: bind mount local WordPress sources for instant reload
+      - ./php/wordpress:/var/www/html:ro
+
+  php:
+    container_name: wp_php_${APP_SUFFIX:-dev}
+    volumes:
+      # Dev mode: bind mount local WordPress sources for live editing
+      - ./php/wordpress:/var/www/html:rw
+
+  db:
+    container_name: wp_db_${APP_SUFFIX:-dev}
+
+  adminer:
+    container_name: wp_adminer_${APP_SUFFIX:-dev}
