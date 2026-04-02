@@ -112,6 +112,46 @@ To stop the stack and remove all containers and volumes:
 docker compose down -v
 ```
 
+## 🧪 DEV Mode (Live Local Editing)
+
+The setup now uses one shared base file (`docker-compose.yml`) and small suffix overlays:
+- `docker-compose.prod.yml` -> suffix `prod`
+- `docker-compose.dev.yml` -> suffix `dev`
+
+This keeps one source of truth for services while generating unique project and container names per environment.
+
+1. Start in dev mode:
+```text
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+2. Rebuild only when Dockerfiles or image dependencies change:
+```text
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+3. Stop dev mode:
+```text
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+```
+
+4. Start prod mode:
+```text
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+5. Confirm resolved names/config:
+```text
+docker compose -f docker-compose.yml -f docker-compose.dev.yml config
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+```
+
+Example generated container names:
+- DEV: `wp_nginx_dev`, `wp_php_dev`, `wp_db_dev`, `wp_adminer_dev`
+- PROD: `wp_nginx_prod`, `wp_php_prod`, `wp_db_prod`, `wp_adminer_prod`
+
+> Note: container-name conflicts are solved by suffixes. If you run DEV and PROD at the same time, ensure host ports are different between the two runs.
+
 ### 🔹 WordPress
 
 **Setup Configuration**

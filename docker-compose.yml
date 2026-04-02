@@ -1,9 +1,9 @@
-name: docker-wp-nginx-php-mariadb
+name: docker-wp-nginx-php-mariadb-${APP_SUFFIX:-prod}
 services:
   nginx:
     build: ./nginx
     image: wp_nginx:latest
-    container_name: wp_nginx
+    container_name: wp_nginx_${APP_SUFFIX:-prod}
     ports:
       - ${NGINX_PORT}:80
     depends_on:
@@ -24,7 +24,7 @@ services:
   php:
     build: ./php
     image: wp_php:latest
-    container_name: wp_php
+    container_name: wp_php_${APP_SUFFIX:-prod}
     depends_on:
       - db
     volumes:
@@ -42,7 +42,7 @@ services:
 
   db:
     image: mariadb:11.0
-    container_name: wp_db
+    container_name: wp_db_${APP_SUFFIX:-prod}
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -65,7 +65,7 @@ services:
 
   adminer:
     image: adminer:4.8.1
-    container_name: wp_adminer
+    container_name: wp_adminer_${APP_SUFFIX:-prod}
     depends_on:
       - db
     ports:
