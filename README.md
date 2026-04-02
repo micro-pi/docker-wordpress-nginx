@@ -12,6 +12,12 @@ Ideal for **local development**, **testing**, or **quick deployment** scenarios.
 - **Adminer** lightweight web-based database browser
 - Managed through **Docker Compose** for easy orchestration
 - Clean, modular structure for extending or customizing services
+- **Pinned image versions** for reproducible, stable builds
+- **Health checks** on all services for automatic failure detection
+- **Auto-restart** policies (`unless-stopped`) for all containers
+- **Gzip compression** and **security headers** via Nginx
+- **OPcache** fully configured for PHP performance
+- **Hardened security**: database port bound to localhost only
 
 ## 🧰 Tech Stack
 
@@ -26,16 +32,19 @@ Ideal for **local development**, **testing**, or **quick deployment** scenarios.
 
 ```text
 docker-wordpress-nginx/
-├── .env                   # Environment variables for WordPress and MariaDB configuration
+├── .env                   # Environment variables (copy from .env.example)
+├── .env.example           # Template with documented environment variables
 ├── docker-compose.yml     # Defines services for WordPress, MariaDB, Nginx, PHP-FPM, and Adminer
 ├── .github/               # GitHub Actions CI/CD configuration
 │    └── workflows/
 │        └──docker-ci.yml  # GitHub workflow for building/testing Docker images
 ├── nginx/                 # Nginx service
+│   ├── .dockerignore      # Files excluded from the Nginx Docker build context
 │   ├── default.conf       # Nginx configuration for serving WordPress
 │   └── Dockerfile         # Custom Nginx image
 ├── php/                   # PHP-FPM service
-│   ├── Dockerfile         # Custom PHP image
+│   ├── .dockerignore      # Files excluded from the PHP Docker build context
+│   ├── Dockerfile         # Custom PHP image with OPcache and extensions
 │   └── wordpress/         # WordPress source files
 │       └── readme.txt
 └── mariadb/               # (optional) MariaDB initialization scripts
@@ -50,22 +59,28 @@ cd docker-wordpress-nginx
 ```
 
 2. Configure your environment
-Edit the `.env` file to set your personal database credentials:
+Copy `.env.example` to `.env` and set your credentials:
 ```text
-# WordPress settings
-WORDPRESS_DB_NAME=your_db_name
-WORDPRESS_DB_USER=your_db_user
-WORDPRESS_DB_PASSWORD=your_db_password
+cp .env.example .env
+```
+Then edit `.env` with your values:
+```text
+# NGINX Configuration
+NGINX_PORT=8081
 
 # MariaDB settings
 MYSQL_ROOT_PASSWORD=your_root_password
-MYSQL_DATABASE=your_db_name
-MYSQL_USER=your_db_user
+MYSQL_DATABASE=wordpress_db
+MYSQL_USER=wordpress_user
 MYSQL_PASSWORD=your_db_password
 
-# Optional: Adminer port
-ADMINER_PORT=8080
+# Database port (bound to localhost only)
+DB_PORT=3307
+
+# Adminer port
+ADMINER_PORT=8181
 ```
+> ⚠️ **Security:** Never commit your `.env` file. Use strong passwords in non-local environments.
 
 3. Build and Start the Docker containers
 ```text
@@ -79,11 +94,11 @@ docker compose ps
 ```
 **🚀 Running Containers**
 ```text
-NAME         IMAGE             COMMAND                  SERVICE   CREATED          STATUS         PORTS
-wp_adminer   adminer:latest    "entrypoint.sh docke…"   adminer   10 minutes ago   Up 9 minutes   0.0.0.0:8181->8080/tcp, [::]:8181->8080/tcp
-wp_db        mariadb:latest    "docker-entrypoint.s…"   db        10 minutes ago   Up 9 minutes   0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp
-wp_nginx     wp_nginx:latest   "/docker-entrypoint.…"   nginx     9 minutes ago    Up 9 minutes   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp
-wp_php       wp_php:latest     "docker-php-entrypoi…"   php       10 minutes ago   Up 9 minutes   9000/tcp
+NAME         IMAGE              COMMAND                  SERVICE   CREATED          STATUS                    PORTS
+wp_adminer   adminer:4.8.1      "entrypoint.sh docke…"   adminer   10 minutes ago   Up 9 minutes (healthy)    0.0.0.0:8181->8080/tcp
+wp_db        mariadb:11.0       "docker-entrypoint.s…"   db        10 minutes ago   Up 9 minutes (healthy)    127.0.0.1:3307->3306/tcp
+wp_nginx     wp_nginx:latest    "/docker-entrypoint.…"   nginx     9 minutes ago    Up 9 minutes (healthy)    0.0.0.0:8081->80/tcp
+wp_php       wp_php:latest      "docker-php-entrypoi…"   php       10 minutes ago   Up 9 minutes (healthy)    9000/tcp
 ```
 
 4. Access your WordPress site
@@ -117,10 +132,9 @@ Below you can see the local Docker environment after building the stack.
 PS D:\workspaces\docker-workspace\docker-wordpress-nginx> docker images
 REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
 wp_php       latest    c48d427debfc   7 minutes ago   822MB
-wp_php       latest    c48d427debfc   7 minutes ago   822MB
 wp_nginx     latest    dc0cdfddea42   30 hours ago    225MB
-adminer      latest    b1d44e230bed   11 days ago     168MB
-mariadb      latest    5b6a1eac15b8   2 months ago    456MB
+adminer      4.8.1     b1d44e230bed   11 days ago     168MB
+mariadb      11.0      5b6a1eac15b8   2 months ago    456MB
 ```
 
 #### 📸 Docker Desktop – Images View
@@ -129,38 +143,38 @@ mariadb      latest    5b6a1eac15b8   2 months ago    456MB
 ### 🚀 Running Containers
 ```text
 PS D:\workspaces\docker-workspace\docker-wordpress-nginx> docker ps
-CONTAINER ID   IMAGE             COMMAND                  CREATED         STATUS         PORTS                                         NAMES
-9a5ef764da35   wp_nginx:latest   "/docker-entrypoint.…"   7 minutes ago   Up 7 minutes   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp       wp_nginx
-a0dbf4566285   adminer:latest    "entrypoint.sh docke…"   7 minutes ago   Up 7 minutes   0.0.0.0:8181->8080/tcp, [::]:8181->8080/tcp   wp_adminer
-8a65218f5b09   wp_php:latest     "docker-php-entrypoi…"   7 minutes ago   Up 7 minutes   9000/tcp                                      wp_php
-3163cebdf6f6   mariadb:latest    "docker-entrypoint.s…"   7 minutes ago   Up 7 minutes   0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp   wp_db
+CONTAINER ID   IMAGE              COMMAND                  CREATED         STATUS                   PORTS                                         NAMES
+9a5ef764da35   wp_nginx:latest    "/docker-entrypoint.…"   7 minutes ago   Up 7 minutes (healthy)   0.0.0.0:8081->80/tcp                          wp_nginx
+a0dbf4566285   adminer:4.8.1      "entrypoint.sh docke…"   7 minutes ago   Up 7 minutes             0.0.0.0:8181->8080/tcp, [::]:8181->8080/tcp   wp_adminer
+8a65218f5b09   wp_php:latest      "docker-php-entrypoi…"   7 minutes ago   Up 7 minutes (healthy)   9000/tcp                                      wp_php
+3163cebdf6f6   mariadb:11.0       "docker-entrypoint.s…"   7 minutes ago   Up 7 minutes (healthy)   127.0.0.1:3307->3306/tcp                      wp_db
 ```
 
 #### 📸 Docker Desktop – Running Containers
 ![Docker Desktop – Running Containers](screenshots/docker-desktop-running-containers.png)
 
 ## 🗄️Database Configuration
-The setup includes a **MariaDB** container with default credentials (customizable via `.env`):
+The setup includes a **MariaDB 11.0** container with default credentials (customizable via `.env`):
 **Default values (for local use):**
-| Variable             | Default   |
-| -------------------- | --------- |
-| `MYSQL_DATABASE`     | wordpress |
-| `MYSQL_USER`         | wordpress |
-| `MYSQL_PASSWORD`     | wordpress |
-| `MYSQL_ROOT_PASSWORD`| root      |
+| Variable               | Default                    |
+| ---------------------- | -------------------------- |
+| `MYSQL_DATABASE`       | wordpress_db               |
+| `MYSQL_USER`           | wordpress_user             |
+| `MYSQL_PASSWORD`       | wordpress_password_change_me |
+| `MYSQL_ROOT_PASSWORD`  | root_password_change_me    |
 
-You can also make the database accessible externally using:
-```text
-DB_BIND_ADDRESS=0.0.0.0
-```
+> 🔒 **Security:** The database port is bound to `127.0.0.1` only, preventing external network access. It is accessible on the host for tools like Adminer or DB clients, but not exposed publicly.
 ## ⚙️ Customization
 You can tweak the following `.env` variables to fit your environment:
-| Variable          | Description               | Default     |
-| ----------------- | ------------------------- | ----------- |
-| `NGINX_PORT`      | Public port for WordPress | `8081`      |
-| `ADMINER_PORT`    | Exposed Adminer port      | `8080`      |
-| `DB_PORT`         | Exposed MariaDB port      | `3306`      |
-| `DB_BIND_ADDRESS` | Database bind address     | `127.0.0.1` |
+| Variable          | Description                             | Default     |
+| ----------------- | --------------------------------------- | ----------- |
+| `NGINX_PORT`      | Public port for WordPress               | `8081`      |
+| `ADMINER_PORT`    | Exposed Adminer port                    | `8181`      |
+| `DB_PORT`         | MariaDB port (localhost only)           | `3307`      |
+| `MYSQL_DATABASE`  | WordPress database name                 | `wordpress_db` |
+| `MYSQL_USER`      | WordPress database user                 | `wordpress_user` |
+| `MYSQL_PASSWORD`  | WordPress database password             | *(set in .env)* |
+| `MYSQL_ROOT_PASSWORD` | MariaDB root password               | *(set in .env)* |
 
 To apply changes after editing `.env`:
 ```text
@@ -176,7 +190,7 @@ It provides a simple web interface to explore, query, and manage your WordPress 
 Adminer is defined as a separate service in `docker-compose.yml`:
 ```text
 adminer:
-  image: adminer:latest
+  image: adminer:4.8.1
   container_name: wp_adminer
   depends_on:
     - db
@@ -184,12 +198,13 @@ adminer:
     - ${ADMINER_PORT}:8080
   environment:
     ADMINER_DEFAULT_SERVER: db
+  restart: unless-stopped
 ```
 
 **🔹 Environment Variable**
 Add to your `.env` file (if not already present):
 ```text
-ADMINER_PORT=8080
+ADMINER_PORT=8181
 ```
 
 **🔹 Usage**
@@ -199,8 +214,8 @@ docker compose up -d
 ```
 
 2. Open Adminer:
-- [http://localhost:8080](http://localhost:8080/)
-- or [http://127.0.0.1:8080](http://127.0.0.1:8080/)
+- [http://localhost:8181](http://localhost:8181/)
+- or [http://127.0.0.1:8181](http://127.0.0.1:8181/)
 
 (or `http://localhost:${ADMINER_PORT}` if changed)
 
