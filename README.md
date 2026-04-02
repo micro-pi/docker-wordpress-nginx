@@ -43,7 +43,6 @@ docker-wordpress-nginx/
 │   ├── default.conf       # Nginx configuration for serving WordPress
 │   └── Dockerfile         # Custom Nginx image
 ├── php/                   # PHP-FPM service
-│   ├── .dockerignore      # Files excluded from the PHP Docker build context
 │   ├── Dockerfile         # Custom PHP image with OPcache and extensions
 │   └── wordpress/         # WordPress source files
 │       └── readme.txt
@@ -94,11 +93,11 @@ docker compose ps
 ```
 **🚀 Running Containers**
 ```text
-NAME         IMAGE              COMMAND                  SERVICE   CREATED          STATUS                    PORTS
-wp_adminer   adminer:4.8.1      "entrypoint.sh docke…"   adminer   10 minutes ago   Up 9 minutes (healthy)    0.0.0.0:8181->8080/tcp
-wp_db        mariadb:11.0       "docker-entrypoint.s…"   db        10 minutes ago   Up 9 minutes (healthy)    127.0.0.1:3307->3306/tcp
-wp_nginx     wp_nginx:latest    "/docker-entrypoint.…"   nginx     9 minutes ago    Up 9 minutes (healthy)    0.0.0.0:8081->80/tcp
-wp_php       wp_php:latest      "docker-php-entrypoi…"   php       10 minutes ago   Up 9 minutes (healthy)    9000/tcp
+NAME              IMAGE              COMMAND                  SERVICE   CREATED          STATUS                    PORTS
+wp_adminer_prod   adminer:4.8.1      "entrypoint.sh docke…"   adminer   10 minutes ago   Up 9 minutes (healthy)    0.0.0.0:8181->8080/tcp
+wp_db_prod        mariadb:11.0       "docker-entrypoint.s…"   db        10 minutes ago   Up 9 minutes (healthy)    127.0.0.1:3307->3306/tcp
+wp_nginx_prod     wp_nginx:latest    "/docker-entrypoint.…"   nginx     9 minutes ago    Up 9 minutes (healthy)    0.0.0.0:8081->80/tcp
+wp_php_prod       wp_php:latest      "docker-php-entrypoi…"   php       10 minutes ago   Up 9 minutes (healthy)    9000/tcp
 ```
 
 4. Access your WordPress site
@@ -184,10 +183,10 @@ mariadb      11.0      5b6a1eac15b8   2 months ago    456MB
 ```text
 PS D:\workspaces\docker-workspace\docker-wordpress-nginx> docker ps
 CONTAINER ID   IMAGE              COMMAND                  CREATED         STATUS                   PORTS                                         NAMES
-9a5ef764da35   wp_nginx:latest    "/docker-entrypoint.…"   7 minutes ago   Up 7 minutes (healthy)   0.0.0.0:8081->80/tcp                          wp_nginx
-a0dbf4566285   adminer:4.8.1      "entrypoint.sh docke…"   7 minutes ago   Up 7 minutes             0.0.0.0:8181->8080/tcp, [::]:8181->8080/tcp   wp_adminer
-8a65218f5b09   wp_php:latest      "docker-php-entrypoi…"   7 minutes ago   Up 7 minutes (healthy)   9000/tcp                                      wp_php
-3163cebdf6f6   mariadb:11.0       "docker-entrypoint.s…"   7 minutes ago   Up 7 minutes (healthy)   127.0.0.1:3307->3306/tcp                      wp_db
+9a5ef764da35   wp_nginx:latest    "/docker-entrypoint.…"   7 minutes ago   Up 7 minutes (healthy)   0.0.0.0:8081->80/tcp                          wp_nginx_prod
+a0dbf4566285   adminer:4.8.1      "entrypoint.sh docke…"   7 minutes ago   Up 7 minutes             0.0.0.0:8181->8080/tcp, [::]:8181->8080/tcp   wp_adminer_prod
+8a65218f5b09   wp_php:latest      "docker-php-entrypoi…"   7 minutes ago   Up 7 minutes (healthy)   9000/tcp                                      wp_php_prod
+3163cebdf6f6   mariadb:11.0       "docker-entrypoint.s…"   7 minutes ago   Up 7 minutes (healthy)   127.0.0.1:3307->3306/tcp                      wp_db_prod
 ```
 
 #### 📸 Docker Desktop – Running Containers
@@ -231,7 +230,7 @@ Adminer is defined as a separate service in `docker-compose.yml`:
 ```text
 adminer:
   image: adminer:4.8.1
-  container_name: wp_adminer
+  container_name: wp_adminer_${APP_SUFFIX:-prod}
   depends_on:
     - db
   ports:
