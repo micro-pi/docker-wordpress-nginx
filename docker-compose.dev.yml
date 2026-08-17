@@ -1,17 +1,34 @@
 name: docker-wp-nginx-php-mariadb-${APP_SUFFIX:-dev}
 
+# Dev mode bind-mounts only our own plugins (the Mpi* git submodules) for
+# live editing. WordPress core and third-party plugins/themes come from
+# the image (composer-managed — see php/composer.json / php/Dockerfile),
+# never from a whole-tree bind mount: `composer install` treats its
+# install-dir as exclusively its own and deletes anything else living
+# there, which would wipe these submodules if the whole tree were mounted.
+# Rebuild the image (`docker compose build php`) after bumping a version
+# in composer.json or editing wp-config.php.
+
 services:
   nginx:
     container_name: wp_nginx_${APP_SUFFIX:-dev}
     volumes:
-      # Dev mode: bind mount local WordPress sources for instant reload
-      - ./php/wordpress:/var/www/html:ro
+      - ./php/wordpress/wp-content/plugins/MpiAbstractClass:/var/www/html/wp-content/plugins/MpiAbstractClass:ro
+      - ./php/wordpress/wp-content/plugins/MpiBreadcrumb:/var/www/html/wp-content/plugins/MpiBreadcrumb:ro
+      - ./php/wordpress/wp-content/plugins/MpiCommentImages:/var/www/html/wp-content/plugins/MpiCommentImages:ro
+      - ./php/wordpress/wp-content/plugins/MpiCommentReplyEmailNotification:/var/www/html/wp-content/plugins/MpiCommentReplyEmailNotification:ro
+      - ./php/wordpress/wp-content/plugins/MpiDomain301Redirects:/var/www/html/wp-content/plugins/MpiDomain301Redirects:ro
 
   php:
     container_name: wp_php_${APP_SUFFIX:-dev}
     volumes:
-      # Dev mode: bind mount local WordPress sources for live editing
-      - ./php/wordpress:/var/www/html:rw
+      - ./php/wordpress/wp-content/plugins/MpiAbstractClass:/var/www/html/wp-content/plugins/MpiAbstractClass:rw
+      - ./php/wordpress/wp-content/plugins/MpiBreadcrumb:/var/www/html/wp-content/plugins/MpiBreadcrumb:rw
+      - ./php/wordpress/wp-content/plugins/MpiCommentImages:/var/www/html/wp-content/plugins/MpiCommentImages:rw
+      - ./php/wordpress/wp-content/plugins/MpiCommentReplyEmailNotification:/var/www/html/wp-content/plugins/MpiCommentReplyEmailNotification:rw
+      - ./php/wordpress/wp-content/plugins/MpiDomain301Redirects:/var/www/html/wp-content/plugins/MpiDomain301Redirects:rw
+      # wp-config.php lives one level above the docroot (see php/Dockerfile)
+      - ./php/wp-config.php:/var/www/wp-config.php:ro
 
   db:
     container_name: wp_db_${APP_SUFFIX:-dev}

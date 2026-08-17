@@ -1,0 +1,20 @@
+[submodule "php/wordpress/wp-content/plugins/MpiBreadcrumb"]
+	path = php/wordpress/wp-content/plugins/MpiBreadcrumb
+	url = https://github.com/micro-pi/MpiBreadcrumb.git
+	branch = main
+[submodule "php/wordpress/wp-content/plugins/MpiCommentImages"]
+	path = php/wordpress/wp-content/plugins/MpiCommentImages
+	url = https://github.com/micro-pi/MpiCommentImages.git
+	branch = main
+[submodule "php/wordpress/wp-content/plugins/MpiAbstractClass"]
+	path = php/wordpress/wp-content/plugins/MpiAbstractClass
+	url = https://github.com/micro-pi/MpiAbstractClass.git
+	branch = main
+[submodule "php/wordpress/wp-content/plugins/MpiCommentReplyEmailNotification"]
+	path = php/wordpress/wp-content/plugins/MpiCommentReplyEmailNotification
+	url = https://github.com/micro-pi/MpiCommentReplyEmailNotification.git
+	branch = main
+[submodule "php/wordpress/wp-content/plugins/MpiDomain301Redirects"]
+	path = php/wordpress/wp-content/plugins/MpiDomain301Redirects
+	url = https://github.com/micro-pi/MpiDomain301Redirects.git
+	branch = main

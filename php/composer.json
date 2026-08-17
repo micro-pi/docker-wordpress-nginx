@@ -12,6 +12,7 @@
     "require": {
         "php": ">=8.3",
         "composer/installers": "^2.3",
+        "johnpbloch/wordpress-core-installer": "^2.0",
         "johnpbloch/wordpress-core": "7.0.4",
         "wpackagist-plugin/akismet": "5.7",
         "wpackagist-plugin/ad-inserter": "2.8.18",

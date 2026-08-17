@@ -1,6 +1,16 @@
-# WordPress source files (managed by Docker image)
+# WordPress core and third-party plugins/themes are installed via Composer
+# (see php/composer.json / php/Dockerfile) and not tracked here. Only our
+# own submodule plugins are (wp-config.php lives at php/wp-config.php,
+# outside this tree, so composer install never touches it).
 /php/wordpress/*
-!/php/wordpress/readme.txt
+!/php/wordpress/wp-content
+/php/wordpress/wp-content/*
+!/php/wordpress/wp-content/plugins
+/php/wordpress/wp-content/plugins/*
+!/php/wordpress/wp-content/plugins/Mpi*
+
+# Composer's own package cache/autoloader — regenerated from composer.lock
+/php/vendor/
 
 # Environment variables — never commit secrets
 .env

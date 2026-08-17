@@ -56,14 +56,17 @@ WORKDIR /var/www/html
 # WordPress core + WPackagist-managed plugins/themes (versions pinned in composer.json)
 COPY --from=wp_vendor --chown=www-data:www-data /build/wordpress .
 
-# Our own plugins (tracked as git submodules) and site config, layered on top
-# so they're never clobbered by the composer-managed tree above.
+# Our own plugins (tracked as git submodules), layered on top so they're
+# never clobbered by the composer-managed tree above.
 COPY --chown=www-data:www-data wordpress/wp-content/plugins/Mpi* wp-content/plugins/
-COPY --chown=www-data:www-data wordpress/wp-content/index.php wp-content/index.php
-COPY --chown=www-data:www-data wordpress/wp-config.php wp-config.php
+
+# wp-config.php lives one directory above the docroot (WordPress's wp-load.php
+# looks here automatically) so `composer install` never wipes it — it only
+# owns /var/www/html.
+COPY --chown=www-data:www-data wp-config.php /var/www/wp-config.php
 
 # Fix permissions: WordPress directory writable by www-data user
-RUN chown -R www-data:www-data . && chmod -R 755 .
+RUN chown -R www-data:www-data . /var/www/wp-config.php && chmod -R 755 . && chmod 640 /var/www/wp-config.php
 
 # Configure OPcache for better performance
 RUN docker-php-ext-enable opcache && \
