@@ -8,16 +8,17 @@ Ideal for **local development**, **testing**, or **quick deployment** scenarios.
 ## 🚀 Features
 
 - WordPress served via **Nginx** and **PHP-FPM**
+- WordPress core and third-party plugins/themes installed via **Composer + WPackagist**, pinned to exact versions — nothing but our own code is committed to this repo
 - **MariaDB** container included (drop-in MySQL replacement)
 - **Adminer** lightweight web-based database browser
 - Managed through **Docker Compose** for easy orchestration
 - Clean, modular structure for extending or customizing services
-- **Pinned image versions** for reproducible, stable builds
+- **Pinned image and package versions** for reproducible, stable builds
 - **Health checks** on all services for automatic failure detection
 - **Auto-restart** policies (`unless-stopped`) for all containers
 - **Gzip compression** and **security headers** via Nginx
 - **OPcache** fully configured for PHP performance
-- **Hardened security**: database port bound to localhost only
+- **Hardened security**: database port bound to localhost only, `wp-config.php` kept outside the web-servable docroot, all secrets read from environment variables (nothing hardcoded)
 
 ## 🧰 Tech Stack
 
@@ -32,30 +33,46 @@ Ideal for **local development**, **testing**, or **quick deployment** scenarios.
 
 ```text
 docker-wordpress-nginx/
-├── .env                   # Environment variables (copy from .env.example)
-├── .env.example           # Template with documented environment variables
-├── docker-compose.yml     # Defines services for WordPress, MariaDB, Nginx, PHP-FPM, and Adminer
-├── .github/               # GitHub Actions CI/CD configuration
+├── .env                    # Environment variables (copy from .env.example)
+├── .env.example            # Template with documented environment variables
+├── .gitmodules             # Our own plugins, tracked as git submodules
+├── docker-compose.yml      # Base services: WordPress, MariaDB, Nginx, PHP-FPM, Adminer
+├── docker-compose.dev.yml  # Dev overlay: live-editable Mpi* plugin mounts
+├── docker-compose.prod.yml # Prod overlay
+├── .github/                # GitHub Actions CI/CD configuration
 │    └── workflows/
-│        └──docker-ci.yml  # GitHub workflow for building/testing Docker images
-├── nginx/                 # Nginx service
-│   ├── .dockerignore      # Files excluded from the Nginx Docker build context
-│   ├── default.conf       # Nginx configuration for serving WordPress
-│   └── Dockerfile         # Custom Nginx image
-├── php/                   # PHP-FPM service
-│   ├── Dockerfile         # Custom PHP image with OPcache and extensions
-│   └── wordpress/         # WordPress source files
-│       └── readme.txt
-└── mariadb/               # (optional) MariaDB initialization scripts
-    └── init.sql
+│        └── docker-ci.yml  # GitHub workflow for building/testing Docker images
+├── nginx/                  # Nginx service
+│   ├── .dockerignore       # Files excluded from the Nginx Docker build context
+│   ├── default.conf        # Nginx configuration for serving WordPress
+│   └── Dockerfile          # Custom Nginx image
+└── php/                    # PHP-FPM service
+    ├── Dockerfile          # Multi-stage: composer install, then the runtime image
+    ├── composer.json       # WordPress core + third-party plugin/theme versions
+    ├── composer.lock       # Locked, exact resolved versions (commit this)
+    ├── wp-config.php       # Env-var-driven config; not tracked inside wordpress/
+    └── wordpress/          # Composer-managed; only wp-content/plugins/Mpi* is tracked
+        └── wp-content/plugins/
+            ├── MpiAbstractClass/               # git submodule
+            ├── MpiBreadcrumb/                  # git submodule
+            ├── MpiCommentImages/                # git submodule
+            ├── MpiCommentReplyEmailNotification/ # git submodule
+            └── MpiDomain301Redirects/          # git submodule
 ```
 
+WordPress core, third-party plugins, and the theme are **not** committed —
+they're resolved by Composer from `php/composer.json`/`composer.lock` at
+build time (see [Managing WordPress Core & Plugin Versions](#-managing-wordpress-core--plugin-versions)
+below). Only our own `Mpi*` plugins (submodules) and `wp-config.php` live in
+this repo.
+
 ## 🛠️ Getting Started
- 1. Clone the repository
+ 1. Clone the repository (with submodules — our own plugins are tracked that way)
 ```text
-git clone https://github.com/micro-pi/docker-wordpress-nginx.git
+git clone --recurse-submodules https://github.com/micro-pi/docker-wordpress-nginx.git
 cd docker-wordpress-nginx
 ```
+Already cloned without `--recurse-submodules`? Run `git submodule update --init --recursive`.
 
 2. Configure your environment
 Copy `.env.example` to `.env` and set your credentials:
@@ -78,14 +95,19 @@ DB_PORT=3307
 
 # Adminer port
 ADMINER_PORT=8181
+
+# WordPress table prefix, debug flag, and auth keys/salts — wp-config.php
+# reads all of these from the environment, nothing is hardcoded. Generate
+# real values with `openssl rand -hex 32` (one per key/salt) — see
+# .env.example for the full list of WORDPRESS_* variables required.
 ```
-> ⚠️ **Security:** Never commit your `.env` file. Use strong passwords in non-local environments.
+> ⚠️ **Security:** Never commit your `.env` file. Use strong, unique passwords and secret keys outside local dev — see `.env.example` for the complete set of required variables.
 
 3. Build and Start the Docker containers
 ```text
-docker compose up -d
+docker compose up -d --build
 ```
-This builds and launches **WordPress**, **Nginx**, **PHP-FPM**, **MariaDB**, and **Adminer** containers in detached mode.
+This builds and launches **WordPress**, **Nginx**, **PHP-FPM**, **MariaDB**, and **Adminer** containers in detached mode. The `php` build resolves WordPress core and third-party plugins/themes via Composer — see [Managing WordPress Core & Plugin Versions](#-managing-wordpress-core--plugin-versions).
 
 To check running containers:
 ```text
@@ -101,9 +123,7 @@ wp_php_prod       wp_php:latest      "docker-php-entrypoi…"   php       10 min
 ```
 
 4. Access your WordPress site
-Open your browser and visit:
-- [http://localhost](http://localhost/)
-- or [http://127.0.0.1](http://127.0.0.1/)
+Open your browser and visit `http://localhost:${NGINX_PORT}` (default: [http://localhost:8081](http://localhost:8081/)). A fresh database redirects straight to the WordPress installer.
 
 5. Stop and clean up
 To stop the stack and remove all containers and volumes:
@@ -118,6 +138,18 @@ The setup now uses one shared base file (`docker-compose.yml`) and small suffix 
 - `docker-compose.dev.yml` -> suffix `dev`
 
 This keeps one source of truth for services while generating unique project and container names per environment.
+
+> **What dev mode bind-mounts, and what it doesn't:** only the `Mpi*` plugin
+> directories are bind-mounted for live editing. WordPress core, third-party
+> plugins, the theme, and `wp-config.php` always come from the built image.
+> This is intentional — `composer install` treats its install directory as
+> exclusively its own and deletes anything else living there, so the whole
+> `php/wordpress` tree can never be bind-mounted as a unit without composer
+> wiping the `Mpi*` submodules on the next install. After changing a version
+> in `composer.json` or editing `wp-config.php`, rebuild the image (step 2
+> below) — and if a stack is already running, recreate its volumes too
+> (`docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v`
+> then `up -d`), since a named volume only seeds from the image once.
 
 1. Start in dev mode:
 ```text
@@ -150,6 +182,32 @@ Example generated container names:
 - PROD: `wp_nginx_prod`, `wp_php_prod`, `wp_db_prod`, `wp_adminer_prod`
 
 > Note: container-name conflicts are solved by suffixes. If you run DEV and PROD at the same time, ensure host ports are different between the two runs.
+
+## 📦 Managing WordPress Core & Plugin Versions
+
+WordPress core and every third-party plugin/theme are resolved by
+[Composer](https://getcomposer.org/) from [WPackagist](https://wpackagist.org/)
+— none of that source is committed to this repo. `php/composer.json` pins
+each one to an exact version; `php/composer.lock` records what actually got
+resolved and is committed so builds are reproducible.
+
+**To bump a version:**
+1. Edit the version string in `php/composer.json` (e.g. `"wpackagist-plugin/akismet": "5.8"`).
+2. Regenerate the lock file:
+   ```text
+   docker run --rm -v "${PWD}/php:/app" -w /app composer:2 composer update <package/name> --no-scripts
+   ```
+   (omit `<package/name>` to update everything to what `composer.json` allows)
+3. Commit both `composer.json` and the updated `composer.lock`.
+4. Rebuild: `docker compose build php`, then recreate the running stack's volumes so it actually picks up the change (see the dev-mode note above).
+
+**To add a new third-party plugin/theme:** find its slug on
+[wpackagist.org](https://wpackagist.org/), add
+`"wpackagist-plugin/<slug>": "<version>"` (or `wpackagist-theme/<slug>`) to
+`composer.json`, then regenerate the lock file and rebuild as above.
+
+Our own plugins (`Mpi*`) are **not** managed by Composer — they're git
+submodules pointing at their own repos, edited and versioned independently.
 
 ### 🔹 WordPress
 
@@ -203,6 +261,20 @@ The setup includes a **MariaDB 11.0** container with default credentials (custom
 | `MYSQL_ROOT_PASSWORD`  | root_password_change_me    |
 
 > 🔒 **Security:** The database port is bound to `127.0.0.1` only, preventing external network access. It is accessible on the host for tools like Adminer or DB clients, but not exposed publicly.
+
+> ⚠️ **MariaDB only applies `MYSQL_*` credentials the first time it initializes an empty data volume.** If you change `MYSQL_USER`/`MYSQL_PASSWORD`/`MYSQL_ROOT_PASSWORD` in `.env` on a stack that's already run before, the running database keeps its old credentials until you recreate the volume: `docker compose down -v` for that environment, then `up -d` again.
+
+`wp-config.php` no longer hardcodes any credentials or secret keys — it reads
+everything from environment variables, wired through `docker-compose.yml`'s
+`php` service from `.env`:
+
+| Variable                                                                                | Purpose                                    |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `WORDPRESS_DB_NAME`, `WORDPRESS_DB_USER`, `WORDPRESS_DB_PASSWORD`, `WORDPRESS_DB_HOST`, `WORDPRESS_DB_CHARSET`, `WORDPRESS_DB_COLLATE` | Database connection (mirror the `MYSQL_*` values) |
+| `WORDPRESS_TABLE_PREFIX`                                                                  | WordPress table prefix (default `wp_`)      |
+| `WORDPRESS_DEBUG`                                                                         | `WP_DEBUG` toggle (`true`/`false`)          |
+| `WORDPRESS_AUTH_KEY`, `WORDPRESS_SECURE_AUTH_KEY`, `WORDPRESS_LOGGED_IN_KEY`, `WORDPRESS_NONCE_KEY`, `WORDPRESS_AUTH_SALT`, `WORDPRESS_SECURE_AUTH_SALT`, `WORDPRESS_LOGGED_IN_SALT`, `WORDPRESS_NONCE_SALT` | WordPress auth keys/salts — generate your own with `openssl rand -hex 32` (one per line) or the [official secret-key API](https://api.wordpress.org/secret-key/1.1/salt/); never reuse the placeholders in `.env.example` |
+
 ## ⚙️ Customization
 You can tweak the following `.env` variables to fit your environment:
 | Variable          | Description                             | Default     |
@@ -286,15 +358,23 @@ docker compose up -d
 
 🔑 Permission denied for WordPress files
 ```text
-sudo chown -R www-data:www-data wordpress
+docker compose exec php chown -R www-data:www-data /var/www/html
 ```
 
-⚙️ Database connection errors
-- Ensure the db container is running:
-```text
-docker compose ps
-```
-- Check your .env values (especially WORDPRESS_DB_HOST).
+⚙️ Database connection errors / `Access denied for user ...` in the `db` logs
+- Ensure the db container is running: `docker compose ps`
+- Check your `.env` values (`WORDPRESS_DB_HOST` should be `db`, and `WORDPRESS_DB_USER`/`WORDPRESS_DB_PASSWORD` should mirror `MYSQL_USER`/`MYSQL_PASSWORD`).
+- **Most common cause:** the `db_data` volume already existed with *different* credentials baked in from an earlier run — MariaDB only applies `.env` credentials the first time it initializes an empty volume. Fix by recreating it (this deletes that environment's database, so only do this if there's nothing worth keeping in it):
+  ```text
+  docker compose down -v
+  docker compose up -d
+  ```
+
+🧱 `docker compose build` fails on `COPY wp-config.php` / `COPY composer.lock`
+- These are tracked files at `php/wp-config.php` and `php/composer.lock` — make sure they exist (see [Managing WordPress Core & Plugin Versions](#-managing-wordpress-core--plugin-versions) if `composer.lock` is missing or out of date).
+
+🧩 A `Mpi*` plugin directory is empty after cloning
+- Submodules weren't initialized: `git submodule update --init --recursive`.
 
 🔍 View logs
 ```text
