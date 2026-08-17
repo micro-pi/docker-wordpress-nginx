@@ -1,3 +1,24 @@
+############################################################
+# Stage 1: resolve WordPress core + third-party plugins/themes
+# via Composer, pinned in composer.json/composer.lock. Bumping
+# a version is then a one-line composer.json change instead of
+# committing vendored plugin source to this repo.
+############################################################
+FROM composer:2 AS wp_vendor
+
+WORKDIR /build
+
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader
+
+############################################################
+# Stage 2: runtime image
+############################################################
 FROM php:8.3-fpm
 
 ############################################################
@@ -32,11 +53,17 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory for subsequent instructions
 WORKDIR /var/www/html
 
-# Copy WordPress files into container and set ownership in a single step
-COPY --chown=www-data:www-data wordpress .
+# WordPress core + WPackagist-managed plugins/themes (versions pinned in composer.json)
+COPY --from=wp_vendor --chown=www-data:www-data /build/wordpress .
 
-# Fix permissions
-RUN chmod -R 755 .
+# Our own plugins (tracked as git submodules) and site config, layered on top
+# so they're never clobbered by the composer-managed tree above.
+COPY --chown=www-data:www-data wordpress/wp-content/plugins/Mpi* wp-content/plugins/
+COPY --chown=www-data:www-data wordpress/wp-content/index.php wp-content/index.php
+COPY --chown=www-data:www-data wordpress/wp-config.php wp-config.php
+
+# Fix permissions: WordPress directory writable by www-data user
+RUN chown -R www-data:www-data . && chmod -R 755 .
 
 # Configure OPcache for better performance
 RUN docker-php-ext-enable opcache && \

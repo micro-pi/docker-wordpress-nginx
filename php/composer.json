@@ -1,0 +1,39 @@
+{
+    "name": "micro-pi/docker-wordpress-nginx",
+    "type": "project",
+    "description": "WordPress core and third-party plugins/themes, version-pinned via Composer + WPackagist",
+    "license": "proprietary",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        }
+    ],
+    "require": {
+        "php": ">=8.3",
+        "composer/installers": "^2.3",
+        "johnpbloch/wordpress-core": "7.0.4",
+        "wpackagist-plugin/akismet": "5.7",
+        "wpackagist-plugin/ad-inserter": "2.8.18",
+        "wpackagist-plugin/autodescription": "5.1.4",
+        "wpackagist-plugin/comment-reply-email-notification": "1.41.0",
+        "wpackagist-plugin/contact-form-plugin": "4.3.9",
+        "wpackagist-plugin/table-of-contents-plus": "202607.1",
+        "wpackagist-theme/generatepress": "3.6.1"
+    },
+    "extra": {
+        "wordpress-install-dir": "wordpress",
+        "installer-paths": {
+            "wordpress/wp-content/plugins/{$name}/": ["type:wordpress-plugin"],
+            "wordpress/wp-content/themes/{$name}/": ["type:wordpress-theme"]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "johnpbloch/wordpress-core-installer": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
